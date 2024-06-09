@@ -65,6 +65,8 @@ const (
 
 	// Delimiters
 	COMMA     = ","
+	DOT       = "."
+	DOTDOT    = ".."
 	SEMICOLON = ";"
 	COLON     = ":"
 	LPAREN    = "("

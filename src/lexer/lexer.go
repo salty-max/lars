@@ -29,21 +29,156 @@ func (l *Lexer) NextToken() token.Token {
 
 	switch l.ch {
 	case '=':
-		tok = newToken(token.ASSIGN, l.ch, l.line, l.col)
+		if l.peekChar() == '=' {
+			ch := l.ch
+			l.readChar()
+			literal := string(ch) + string(l.ch)
+			tok = token.Token{Type: token.EQ, Literal: literal, Col: l.col, Line: l.line}
+		} else {
+			tok = newToken(token.ASSIGN, l.ch, l.line, l.col)
+		}
 	case ';':
 		tok = newToken(token.SEMICOLON, l.ch, l.line, l.col)
+	case ',':
+		tok = newToken(token.COMMA, l.ch, l.line, l.col)
+	case ':':
+		tok = newToken(token.COLON, l.ch, l.line, l.col)
+	case '.':
+		if l.peekChar() == '.' {
+			ch := l.ch
+			l.readChar()
+			literal := string(ch) + string(l.ch)
+			tok = token.Token{Type: token.DOTDOT, Literal: literal, Col: l.col, Line: l.line}
+		} else {
+			tok = newToken(token.DOT, l.ch, l.line, l.col)
+		}
+	case '+':
+		if l.peekChar() == '=' {
+			ch := l.ch
+			l.readChar()
+			literal := string(ch) + string(l.ch)
+			tok = token.Token{Type: token.PLUS_EQ, Literal: literal, Col: l.col, Line: l.line}
+		} else if l.peekChar() == '+' {
+			ch := l.ch
+			l.readChar()
+			literal := string(ch) + string(l.ch)
+			tok = token.Token{Type: token.INC, Literal: literal, Col: l.col, Line: l.line}
+		} else {
+			tok = newToken(token.PLUS, l.ch, l.line, l.col)
+		}
+	case '-':
+		if l.peekChar() == '=' {
+			ch := l.ch
+			l.readChar()
+			literal := string(ch) + string(l.ch)
+			tok = token.Token{Type: token.MINUS_EQ, Literal: literal, Col: l.col, Line: l.line}
+		} else if l.peekChar() == '-' {
+			ch := l.ch
+			l.readChar()
+			literal := string(ch) + string(l.ch)
+			tok = token.Token{Type: token.DEC, Literal: literal, Col: l.col, Line: l.line}
+		} else {
+			tok = newToken(token.MINUS, l.ch, l.line, l.col)
+		}
+	case '*':
+		if l.peekChar() == '=' {
+			ch := l.ch
+			l.readChar()
+			literal := string(ch) + string(l.ch)
+			tok = token.Token{Type: token.STAR_EQ, Literal: literal, Col: l.col, Line: l.line}
+		} else {
+			tok = newToken(token.STAR, l.ch, l.line, l.col)
+		}
+	case '/':
+		if l.peekChar() == '=' {
+			ch := l.ch
+			l.readChar()
+			literal := string(ch) + string(l.ch)
+			tok = token.Token{Type: token.SLASH_EQ, Literal: literal, Col: l.col, Line: l.line}
+		} else {
+			tok = newToken(token.SLASH, l.ch, l.line, l.col)
+		}
+	case '%':
+		if l.peekChar() == '=' {
+			ch := l.ch
+			l.readChar()
+			literal := string(ch) + string(l.ch)
+			tok = token.Token{Type: token.PERCENT_EQ, Literal: literal, Col: l.col, Line: l.line}
+		} else {
+			tok = newToken(token.PERCENT, l.ch, l.line, l.col)
+		}
+	case '!':
+		if l.peekChar() == '=' {
+			ch := l.ch
+			l.readChar()
+			literal := string(ch) + string(l.ch)
+			tok = token.Token{Type: token.NOT_EQ, Literal: literal, Col: l.col, Line: l.line}
+		} else {
+			tok = newToken(token.BANG, l.ch, l.line, l.col)
+		}
 	case '(':
 		tok = newToken(token.LPAREN, l.ch, l.line, l.col)
 	case ')':
 		tok = newToken(token.RPAREN, l.ch, l.line, l.col)
-	case ',':
-		tok = newToken(token.COMMA, l.ch, l.line, l.col)
-	case '+':
-		tok = newToken(token.PLUS, l.ch, l.line, l.col)
 	case '{':
 		tok = newToken(token.LBRACE, l.ch, l.line, l.col)
 	case '}':
 		tok = newToken(token.RBRACE, l.ch, l.line, l.col)
+	case '[':
+		tok = newToken(token.LBRACKET, l.ch, l.line, l.col)
+	case ']':
+		tok = newToken(token.RBRACKET, l.ch, l.line, l.col)
+	case '<':
+		if l.peekChar() == '=' {
+			ch := l.ch
+			l.readChar()
+			literal := string(ch) + string(l.ch)
+			tok = token.Token{Type: token.LTE, Literal: literal, Col: l.col, Line: l.line}
+		} else if l.peekChar() == '<' {
+			ch := l.ch
+			l.readChar()
+			literal := string(ch) + string(l.ch)
+			tok = token.Token{Type: token.LSHIFT, Literal: literal, Col: l.col, Line: l.line}
+		} else {
+			tok = newToken(token.LT, l.ch, l.line, l.col)
+		}
+	case '>':
+		if l.peekChar() == '=' {
+			ch := l.ch
+			l.readChar()
+			literal := string(ch) + string(l.ch)
+			tok = token.Token{Type: token.GTE, Literal: literal, Col: l.col, Line: l.line}
+
+		} else if l.peekChar() == '>' {
+			ch := l.ch
+			l.readChar()
+			literal := string(ch) + string(l.ch)
+			tok = token.Token{Type: token.RSHIFT, Literal: literal, Col: l.col, Line: l.line}
+		} else {
+			tok = newToken(token.GT, l.ch, l.line, l.col)
+		}
+	case '&':
+		if l.peekChar() == '&' {
+			ch := l.ch
+			l.readChar()
+			literal := string(ch) + string(l.ch)
+			tok = token.Token{Type: token.AND, Literal: literal, Col: l.col, Line: l.line}
+		} else {
+			tok = newToken(token.BIT_AND, l.ch, l.line, l.col)
+		}
+	case '|':
+		if l.peekChar() == '|' {
+			ch := l.ch
+			l.readChar()
+			literal := string(ch) + string(l.ch)
+			tok = token.Token{Type: token.OR, Literal: literal, Col: l.col, Line: l.line}
+		} else {
+			tok = newToken(token.BIT_OR, l.ch, l.line, l.col)
+		}
+	case '^':
+		tok = newToken(token.BIT_XOR, l.ch, l.line, l.col)
+	case '~':
+		tok = newToken(token.BIT_NOT, l.ch, l.line, l.col)
 	case 0:
 		tok.Literal = ""
 		tok.Type = token.EOF
@@ -52,7 +187,8 @@ func (l *Lexer) NextToken() token.Token {
 			tok.Literal = l.readIdentifier()
 			tok.Type = token.LookupIdent(tok.Literal)
 			return tok
-		} else if isDigit(l.ch) || l.ch == '.' {
+		} else if isDigit(l.ch) {
+
 			tok.Literal = l.readNumber()
 			if isFloat(tok.Literal) {
 				tok.Type = token.FLOAT
@@ -79,10 +215,7 @@ func (l *Lexer) skipWhitespace() {
 		if l.ch == '\n' {
 			l.line += 1
 			l.col = 0
-		} else {
-			l.col += 1
 		}
-
 		l.readChar()
 	}
 }
@@ -96,6 +229,14 @@ func (l *Lexer) readChar() {
 
 	l.position = l.readPosition
 	l.readPosition += 1
+	l.col += 1
+}
+
+func (l *Lexer) peekChar() byte {
+	if l.readPosition >= len(l.input) {
+		return 0
+	}
+	return l.input[l.readPosition]
 }
 
 func (l *Lexer) readNumber() string {
