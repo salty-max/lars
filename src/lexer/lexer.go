@@ -1,6 +1,8 @@
 package lexer
 
 import (
+	"fmt"
+
 	"github.com/salty-max/lars/src/token"
 )
 
@@ -33,7 +35,7 @@ func (l *Lexer) NextToken() token.Token {
 			ch := l.ch
 			l.readChar()
 			literal := string(ch) + string(l.ch)
-			tok = token.Token{Type: token.EQ, Literal: literal, Col: l.col, Line: l.line}
+			tok = token.Token{Type: token.EQ, Literal: literal, Col: l.col - 1, Line: l.line}
 		} else {
 			tok = newToken(token.ASSIGN, l.ch, l.line, l.col)
 		}
@@ -48,7 +50,7 @@ func (l *Lexer) NextToken() token.Token {
 			ch := l.ch
 			l.readChar()
 			literal := string(ch) + string(l.ch)
-			tok = token.Token{Type: token.DOTDOT, Literal: literal, Col: l.col, Line: l.line}
+			tok = token.Token{Type: token.DOTDOT, Literal: literal, Col: l.col - 1, Line: l.line}
 		} else {
 			tok = newToken(token.DOT, l.ch, l.line, l.col)
 		}
@@ -57,12 +59,12 @@ func (l *Lexer) NextToken() token.Token {
 			ch := l.ch
 			l.readChar()
 			literal := string(ch) + string(l.ch)
-			tok = token.Token{Type: token.PLUS_EQ, Literal: literal, Col: l.col, Line: l.line}
+			tok = token.Token{Type: token.PLUS_EQ, Literal: literal, Col: l.col - 1, Line: l.line}
 		} else if l.peekChar() == '+' {
 			ch := l.ch
 			l.readChar()
 			literal := string(ch) + string(l.ch)
-			tok = token.Token{Type: token.INC, Literal: literal, Col: l.col, Line: l.line}
+			tok = token.Token{Type: token.INC, Literal: literal, Col: l.col - 1, Line: l.line}
 		} else {
 			tok = newToken(token.PLUS, l.ch, l.line, l.col)
 		}
@@ -71,12 +73,12 @@ func (l *Lexer) NextToken() token.Token {
 			ch := l.ch
 			l.readChar()
 			literal := string(ch) + string(l.ch)
-			tok = token.Token{Type: token.MINUS_EQ, Literal: literal, Col: l.col, Line: l.line}
+			tok = token.Token{Type: token.MINUS_EQ, Literal: literal, Col: l.col - 1, Line: l.line}
 		} else if l.peekChar() == '-' {
 			ch := l.ch
 			l.readChar()
 			literal := string(ch) + string(l.ch)
-			tok = token.Token{Type: token.DEC, Literal: literal, Col: l.col, Line: l.line}
+			tok = token.Token{Type: token.DEC, Literal: literal, Col: l.col - 1, Line: l.line}
 		} else {
 			tok = newToken(token.MINUS, l.ch, l.line, l.col)
 		}
@@ -85,7 +87,7 @@ func (l *Lexer) NextToken() token.Token {
 			ch := l.ch
 			l.readChar()
 			literal := string(ch) + string(l.ch)
-			tok = token.Token{Type: token.STAR_EQ, Literal: literal, Col: l.col, Line: l.line}
+			tok = token.Token{Type: token.STAR_EQ, Literal: literal, Col: l.col - 1, Line: l.line}
 		} else {
 			tok = newToken(token.STAR, l.ch, l.line, l.col)
 		}
@@ -94,7 +96,7 @@ func (l *Lexer) NextToken() token.Token {
 			ch := l.ch
 			l.readChar()
 			literal := string(ch) + string(l.ch)
-			tok = token.Token{Type: token.SLASH_EQ, Literal: literal, Col: l.col, Line: l.line}
+			tok = token.Token{Type: token.SLASH_EQ, Literal: literal, Col: l.col - 1, Line: l.line}
 		} else {
 			tok = newToken(token.SLASH, l.ch, l.line, l.col)
 		}
@@ -103,7 +105,12 @@ func (l *Lexer) NextToken() token.Token {
 			ch := l.ch
 			l.readChar()
 			literal := string(ch) + string(l.ch)
-			tok = token.Token{Type: token.PERCENT_EQ, Literal: literal, Col: l.col, Line: l.line}
+			tok = token.Token{
+				Type:    token.PERCENT_EQ,
+				Literal: literal,
+				Col:     l.col - 1,
+				Line:    l.line,
+			}
 		} else {
 			tok = newToken(token.PERCENT, l.ch, l.line, l.col)
 		}
@@ -111,8 +118,9 @@ func (l *Lexer) NextToken() token.Token {
 		if l.peekChar() == '=' {
 			ch := l.ch
 			l.readChar()
+			fmt.Println(l.col)
 			literal := string(ch) + string(l.ch)
-			tok = token.Token{Type: token.NOT_EQ, Literal: literal, Col: l.col, Line: l.line}
+			tok = token.Token{Type: token.NOT_EQ, Literal: literal, Col: l.col - 1, Line: l.line}
 		} else {
 			tok = newToken(token.BANG, l.ch, l.line, l.col)
 		}
@@ -133,12 +141,12 @@ func (l *Lexer) NextToken() token.Token {
 			ch := l.ch
 			l.readChar()
 			literal := string(ch) + string(l.ch)
-			tok = token.Token{Type: token.LTE, Literal: literal, Col: l.col, Line: l.line}
+			tok = token.Token{Type: token.LTE, Literal: literal, Col: l.col - 1, Line: l.line}
 		} else if l.peekChar() == '<' {
 			ch := l.ch
 			l.readChar()
 			literal := string(ch) + string(l.ch)
-			tok = token.Token{Type: token.LSHIFT, Literal: literal, Col: l.col, Line: l.line}
+			tok = token.Token{Type: token.LSHIFT, Literal: literal, Col: l.col - 1, Line: l.line}
 		} else {
 			tok = newToken(token.LT, l.ch, l.line, l.col)
 		}
@@ -147,13 +155,13 @@ func (l *Lexer) NextToken() token.Token {
 			ch := l.ch
 			l.readChar()
 			literal := string(ch) + string(l.ch)
-			tok = token.Token{Type: token.GTE, Literal: literal, Col: l.col, Line: l.line}
+			tok = token.Token{Type: token.GTE, Literal: literal, Col: l.col - 1, Line: l.line}
 
 		} else if l.peekChar() == '>' {
 			ch := l.ch
 			l.readChar()
 			literal := string(ch) + string(l.ch)
-			tok = token.Token{Type: token.RSHIFT, Literal: literal, Col: l.col, Line: l.line}
+			tok = token.Token{Type: token.RSHIFT, Literal: literal, Col: l.col - 1, Line: l.line}
 		} else {
 			tok = newToken(token.GT, l.ch, l.line, l.col)
 		}
@@ -162,7 +170,7 @@ func (l *Lexer) NextToken() token.Token {
 			ch := l.ch
 			l.readChar()
 			literal := string(ch) + string(l.ch)
-			tok = token.Token{Type: token.AND, Literal: literal, Col: l.col, Line: l.line}
+			tok = token.Token{Type: token.AND, Literal: literal, Col: l.col - 1, Line: l.line}
 		} else {
 			tok = newToken(token.BIT_AND, l.ch, l.line, l.col)
 		}
@@ -171,7 +179,7 @@ func (l *Lexer) NextToken() token.Token {
 			ch := l.ch
 			l.readChar()
 			literal := string(ch) + string(l.ch)
-			tok = token.Token{Type: token.OR, Literal: literal, Col: l.col, Line: l.line}
+			tok = token.Token{Type: token.OR, Literal: literal, Col: l.col - 1, Line: l.line}
 		} else {
 			tok = newToken(token.BIT_OR, l.ch, l.line, l.col)
 		}
@@ -182,13 +190,18 @@ func (l *Lexer) NextToken() token.Token {
 	case 0:
 		tok.Literal = ""
 		tok.Type = token.EOF
+		tok.Line = l.line
+		tok.Col = l.col
 	default:
 		if isLetter(l.ch) {
+			tok.Line = l.line
+			tok.Col = l.col
 			tok.Literal = l.readIdentifier()
 			tok.Type = token.LookupIdent(tok.Literal)
 			return tok
 		} else if isDigit(l.ch) {
-
+			tok.Line = l.line
+			tok.Col = l.col
 			tok.Literal = l.readNumber()
 			if isFloat(tok.Literal) {
 				tok.Type = token.FLOAT
@@ -216,6 +229,7 @@ func (l *Lexer) skipWhitespace() {
 			l.line += 1
 			l.col = 0
 		}
+
 		l.readChar()
 	}
 }

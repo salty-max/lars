@@ -1,5 +1,7 @@
 package token
 
+import "fmt"
+
 // TokenType represents a type of token.
 type TokenType string
 
@@ -9,6 +11,10 @@ type Token struct {
 	Literal string
 	Col     int
 	Line    int
+}
+
+func (t Token) Debug() string {
+	return fmt.Sprintf("%s %s (%d:%d)", t.Type, t.Literal, t.Line, t.Col)
 }
 
 // LookupIdent checks if the given identifier is a keyword.
