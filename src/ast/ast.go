@@ -2,6 +2,7 @@ package ast
 
 import (
 	"bytes"
+	"strconv"
 
 	"github.com/salty-max/lars/src/token"
 )
@@ -123,6 +124,27 @@ func (pe *PrefixExpression) String() string {
 	return out.String()
 }
 
+type InfixExpression struct {
+	Token    token.Token
+	Left     Expression
+	Operator string
+	Right    Expression
+}
+
+func (ie *InfixExpression) expressionNode()      {}
+func (ie *InfixExpression) TokenLiteral() string { return ie.Token.Literal }
+func (ie *InfixExpression) String() string {
+	var out bytes.Buffer
+
+	out.WriteString("(")
+	out.WriteString(ie.Left.String())
+	out.WriteString(" " + ie.Operator + " ")
+	out.WriteString(ie.Right.String())
+	out.WriteString(")")
+
+	return out.String()
+}
+
 type Identifier struct {
 	Token token.Token
 	Value string
@@ -146,6 +168,8 @@ type FloatLiteral struct {
 	Value float64
 }
 
-func (fl *FloatLiteral) expressionNode()      {}
-func (fl *FloatLiteral) TokenLiteral() string { return fl.Token.Literal }
-func (fl *FloatLiteral) String() string       { return fl.Token.Literal }
+func (fl *FloatLiteral) expressionNode() {}
+func (fl *FloatLiteral) TokenLiteral() string {
+	return strconv.FormatFloat(fl.Value, 'g', -1, 64)
+}
+func (fl *FloatLiteral) String() string { return fl.Token.Literal }
