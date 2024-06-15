@@ -6,6 +6,7 @@ import (
 	"io"
 	"os/user"
 
+	"github.com/salty-max/lars/src/evaluator"
 	"github.com/salty-max/lars/src/lexer"
 	"github.com/salty-max/lars/src/log"
 	"github.com/salty-max/lars/src/parser"
@@ -42,8 +43,11 @@ func Start(in io.Reader, out io.Writer, user *user.User) {
 			continue
 		}
 
-		io.WriteString(out, program.String())
-		io.WriteString(out, "\n")
+		evaluated := evaluator.Eval(program)
+		if evaluated != nil {
+			io.WriteString(out, log.Colorize(log.GREEN, evaluated.Inspect()))
+			io.WriteString(out, "\n")
+		}
 	}
 }
 
@@ -52,6 +56,9 @@ func printParserErrors(out io.Writer, errors []parser.ParserError) {
 
 	io.WriteString(out, log.Colorize(log.RED, fmt.Sprintf("Parser has %d error(s)\n", len(errors))))
 	for _, err := range errors {
-		io.WriteString(out, log.Colorize(log.RED, fmt.Sprintf("\t(%d:%d) -> %s\n", err.Line, err.Col, err.Msg)))
+		io.WriteString(
+			out,
+			log.Colorize(log.RED, fmt.Sprintf("\t(%d:%d) -> %s\n", err.Line, err.Col, err.Msg)),
+		)
 	}
 }
