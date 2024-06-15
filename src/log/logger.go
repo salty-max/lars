@@ -5,7 +5,6 @@ import (
 	"io"
 	"log"
 	"sync"
-	"time"
 )
 
 type ANSIColor string
@@ -50,31 +49,25 @@ func NewLogger(out io.Writer) *Logger {
 	}
 }
 
-func (l *Logger) log(color ANSIColor, text string, withTimestamp bool) {
+func (l *Logger) log(color ANSIColor, text string) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
-	if withTimestamp {
-		timestamp := time.Now().Format(time.RFC3339)
-		logText := fmt.Sprintf("[%q]: %s", timestamp, text)
-		l.output.Println(colorize(color, logText))
-	} else {
-		l.output.Println(colorize(color, text))
-	}
+	l.output.Println(Colorize(color, text))
 }
 
 func (l *Logger) Info(text string) {
-	l.log(BLUE, text, false)
+	l.log(BLUE, text)
 }
 
 func (l *Logger) Warn(text string) {
-	l.log(YELLOW, text, false)
+	l.log(YELLOW, text)
 }
 
 func (l *Logger) Error(text string) {
-	l.log(RED, text, false)
+	l.log(RED, text)
 }
 
-func colorize(color ANSIColor, text string) string {
+func Colorize(color ANSIColor, text string) string {
 	return fmt.Sprintf("%s%s%s", color, text, RESET)
 }
