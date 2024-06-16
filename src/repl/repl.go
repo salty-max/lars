@@ -9,6 +9,7 @@ import (
 	"github.com/salty-max/lars/src/evaluator"
 	"github.com/salty-max/lars/src/lexer"
 	"github.com/salty-max/lars/src/log"
+	"github.com/salty-max/lars/src/object"
 	"github.com/salty-max/lars/src/parser"
 )
 
@@ -45,7 +46,12 @@ func Start(in io.Reader, out io.Writer, user *user.User) {
 
 		evaluated := evaluator.Eval(program)
 		if evaluated != nil {
-			io.WriteString(out, log.Colorize(log.GREEN, evaluated.Inspect()))
+			if evaluated.Type() == object.ERROR_OBJ {
+				io.WriteString(out, log.Colorize(log.RED, evaluated.Inspect()))
+			} else {
+				io.WriteString(out, log.Colorize(log.GREEN, evaluated.Inspect()))
+			}
+
 			io.WriteString(out, "\n")
 		}
 	}

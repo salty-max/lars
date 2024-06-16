@@ -1,10 +1,12 @@
 package evaluator
 
 import (
+	"fmt"
 	"math"
 
 	"github.com/salty-max/lars/src/ast"
 	"github.com/salty-max/lars/src/object"
+	"github.com/salty-max/lars/src/token"
 )
 
 var (
@@ -21,11 +23,15 @@ func Eval(node ast.Node) object.Object {
 	case *ast.ExpressionStatement:
 		return Eval(node.Expression)
 	case *ast.BlockStatement:
-		return evalBlockStatement(node)
+		return evalBlockStatements(node)
 	case *ast.IfExpression:
 		return evalIfExpression(node)
 	case *ast.ReturnStatement:
 		val := Eval(node.ReturnValue)
+		if isError(val) {
+			return val
+		}
+
 		return &object.ReturnValue{Value: val}
 
 		// Expressions
@@ -39,11 +45,22 @@ func Eval(node ast.Node) object.Object {
 		return NULL
 	case *ast.PrefixExpression:
 		right := Eval(node.Right)
-		return evalPrefixExpression(node.Operator, right)
+		if isError(right) {
+			return right
+		}
+
+		return evalPrefixExpression(node.Token, node.Operator, right)
 	case *ast.InfixExpression:
 		left := Eval(node.Left)
+		if isError(left) {
+			return left
+		}
 		right := Eval(node.Right)
-		return evalInfixExpression(node.Operator, left, right)
+		if isError(right) {
+			return right
+		}
+
+		return evalInfixExpression(node.Token, node.Operator, left, right)
 	}
 
 	return nil
@@ -55,8 +72,11 @@ func evalProgram(program *ast.Program) object.Object {
 	for _, statement := range program.Statements {
 		result = Eval(statement)
 
-		if returnValue, ok := result.(*object.ReturnValue); ok {
-			return returnValue.Value
+		switch result := result.(type) {
+		case *object.ReturnValue:
+			return result.Value
+		case *object.Error:
+			return result
 		}
 	}
 
@@ -77,14 +97,17 @@ func evalStatements(stmts []ast.Statement) object.Object {
 	return res
 }
 
-func evalBlockStatement(block *ast.BlockStatement) object.Object {
+func evalBlockStatements(block *ast.BlockStatement) object.Object {
 	var result object.Object
 
 	for _, statement := range block.Statements {
 		result = Eval(statement)
 
-		if result != nil && result.Type() == object.RETURN_VALUE_OBJ {
-			return result
+		if result != nil {
+			rt := result.Type()
+			if rt == object.RETURN_VALUE_OBJ || rt == object.ERROR_OBJ {
+				return result
+			}
 		}
 	}
 
@@ -93,6 +116,10 @@ func evalBlockStatement(block *ast.BlockStatement) object.Object {
 
 func evalIfExpression(ie *ast.IfExpression) object.Object {
 	condition := Eval(ie.Condition)
+	if isError(condition) {
+		return condition
+	}
+
 	if isTruthy(condition) {
 		return Eval(ie.Consequence)
 	} else if ie.Alternative != nil {
@@ -102,43 +129,53 @@ func evalIfExpression(ie *ast.IfExpression) object.Object {
 	}
 }
 
-func evalPrefixExpression(operator string, right object.Object) object.Object {
+func evalPrefixExpression(token token.Token, operator string, right object.Object) object.Object {
 	switch operator {
 	case "!":
 		return evalBangOperatorExpression(right)
 	case "-":
-		return evalMinusPrefixOperatorExpression(right)
+		return evalMinusPrefixOperatorExpression(token, right)
 	default:
-		return NULL
+		return newError(token, "unknown operator: %s%s", operator, right.Type())
 	}
 }
 
-func evalInfixExpression(operator string, left, right object.Object) object.Object {
+func evalInfixExpression(
+	token token.Token,
+	operator string,
+	left, right object.Object,
+) object.Object {
 	switch {
 	case left.Type() == object.INTEGER_OBJ && right.Type() == object.INTEGER_OBJ:
-		return evalIntegerInfixExpression(operator, left, right)
+		return evalIntegerInfixExpression(token, operator, left, right)
 	case left.Type() == object.FLOAT_OBJ && right.Type() == object.FLOAT_OBJ:
-		return evalFloatInfixExpression(operator, left, right)
+		return evalFloatInfixExpression(token, operator, left, right)
 	case left.Type() == object.INTEGER_OBJ && right.Type() == object.FLOAT_OBJ:
 		return evalFloatInfixExpression(
+			token,
 			operator,
 			&object.Float{Value: float64(left.(*object.Integer).Value)},
 			right,
 		)
 	case left.Type() == object.FLOAT_OBJ && right.Type() == object.INTEGER_OBJ:
 		return evalFloatInfixExpression(
+			token,
 			operator,
 			left,
 			&object.Float{Value: float64(right.(*object.Integer).Value)},
 		)
 	case left.Type() == object.BOOLEAN_OBJ && right.Type() == object.BOOLEAN_OBJ:
-		return evalBooleanInfixExpression(operator, left, right)
+		return evalBooleanInfixExpression(token, operator, left, right)
 	default:
-		return NULL
+		return newError(token, "type mismatch: %s %s %s", left.Type(), operator, right.Type())
 	}
 }
 
-func evalIntegerInfixExpression(operator string, left, right object.Object) object.Object {
+func evalIntegerInfixExpression(
+	token token.Token,
+	operator string,
+	left, right object.Object,
+) object.Object {
 	leftValue := left.(*object.Integer).Value
 	rightValue := right.(*object.Integer).Value
 
@@ -166,11 +203,15 @@ func evalIntegerInfixExpression(operator string, left, right object.Object) obje
 	case "!=":
 		return nativeBoolToBooleanObject(leftValue != rightValue)
 	default:
-		return NULL
+		return newError(token, "unknown operator: %s %s %s", left.Type(), operator, right.Type())
 	}
 }
 
-func evalFloatInfixExpression(operator string, left, right object.Object) object.Object {
+func evalFloatInfixExpression(
+	token token.Token,
+	operator string,
+	left, right object.Object,
+) object.Object {
 	leftValue := left.(*object.Float).Value
 	rightValue := right.(*object.Float).Value
 
@@ -198,11 +239,15 @@ func evalFloatInfixExpression(operator string, left, right object.Object) object
 	case "!=":
 		return nativeBoolToBooleanObject(leftValue != rightValue)
 	default:
-		return NULL
+		return newError(token, "unknown operator: %s %s %s", left.Type(), operator, right.Type())
 	}
 }
 
-func evalBooleanInfixExpression(operator string, left, right object.Object) object.Object {
+func evalBooleanInfixExpression(
+	token token.Token,
+	operator string,
+	left, right object.Object,
+) object.Object {
 	leftValue := left.(*object.Boolean).Value
 	rightValue := right.(*object.Boolean).Value
 
@@ -212,7 +257,7 @@ func evalBooleanInfixExpression(operator string, left, right object.Object) obje
 	case "!=":
 		return nativeBoolToBooleanObject(leftValue != rightValue)
 	default:
-		return NULL
+		return newError(token, "unknown operator: %s %s %s", left.Type(), operator, right.Type())
 	}
 }
 
@@ -229,9 +274,9 @@ func evalBangOperatorExpression(right object.Object) object.Object {
 	}
 }
 
-func evalMinusPrefixOperatorExpression(right object.Object) object.Object {
+func evalMinusPrefixOperatorExpression(token token.Token, right object.Object) object.Object {
 	if right.Type() != object.INTEGER_OBJ && right.Type() != object.FLOAT_OBJ {
-		return NULL
+		return newError(token, "unknown operator: -%s", right.Type())
 	}
 
 	if right.Type() == object.INTEGER_OBJ {
@@ -261,4 +306,15 @@ func isTruthy(obj object.Object) bool {
 	default:
 		return true
 	}
+}
+
+func newError(token token.Token, format string, a ...interface{}) *object.Error {
+	return &object.Error{Line: token.Line, Col: token.Col, Message: fmt.Sprintf(format, a...)}
+}
+
+func isError(obj object.Object) bool {
+	if obj != nil {
+		return obj.Type() == object.ERROR_OBJ
+	}
+	return false
 }
